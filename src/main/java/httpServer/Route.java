@@ -24,4 +24,8 @@ public class Route {
     public RouteHandler getHandler() {
         return handler;
     }
+
+    public boolean getRequiresAuthentication() {
+        return requiresAuthentication;
+    }
 }

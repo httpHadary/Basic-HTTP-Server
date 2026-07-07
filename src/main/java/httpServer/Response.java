@@ -1,8 +1,11 @@
 package httpServer;
 
+import serialization.JsonSerializer;
+
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Response {
     private final String httpVersion = "HTTP/1.1";
@@ -104,4 +107,25 @@ public class Response {
     public byte[] getResponseBody() {
         return this.responseBody;
     }
+
+    public void json(String json) {
+        sendText(json, "application/json");
+    }
+
+    public void json(Map<String, ?> map) {
+        json(JsonSerializer.serialize(map));
+    }
+
+    public void text(String text) {
+        sendText(text, "text/plain");
+    }
+
+    private void sendText(String data, String contentType) {
+        if (getStatusCode() == null) setStatusCode("200");
+
+        addResponseHeader("Content-Type", contentType);
+
+        setTextResponseBody(data);
+    }
+
 }

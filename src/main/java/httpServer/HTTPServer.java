@@ -1,9 +1,6 @@
 package httpServer;
 
-import middleware.ExceptionMiddleware;
-import middleware.LoggingMiddleware;
-import middleware.Middleware;
-import middleware.MiddlewareChain;
+import middleware.*;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -32,7 +29,8 @@ public class HTTPServer {
 
             use(new ExceptionMiddleware());
             use(new LoggingMiddleware());
-
+            use(new CorsMiddleware());
+            use(new AuthenticationMiddleware());
 
             while (true) {
                 Socket connection = serverSocket.accept();
@@ -80,14 +78,12 @@ public class HTTPServer {
                         responseObject.setStatusCode("405");
                         responseObject.setTextResponseBody("Method Not Allowed");
                         responseObject.addResponseHeader("Content-Type", "text/plain");
-                        break;
                     }
 
                     case Router.RouteResult.NOT_FOUND -> {
                         responseObject.setStatusCode("404");
                         responseObject.setTextResponseBody("Route Is Not Found");
                         responseObject.addResponseHeader("Content-Type", "text/plain");
-                        break;
                     }
 
                     case Router.RouteResult.MATCHED -> {
@@ -106,7 +102,6 @@ public class HTTPServer {
                                         } );
 
                         middlewareChain.next(requestObject, responseObject);
-                        break;
                     }
                 }
             }
@@ -185,7 +180,7 @@ public class HTTPServer {
         router.get("/user-agent", Handlers::userAgentHandler, false);
         router.get("/echo/{message}", Handlers::echoHandler, false);
         router.get("/search", Handlers::searchHandler, false);
-        router.get("/files/{filename}", Handlers::downloadFileHandler, false);
+        router.get("/files/{filename}", Handlers::downloadFileHandler, true);
         router.post("/files/{filename}", Handlers::createFileHandler, false);
         router.put("/files/{filename}", Handlers::updateFileHandler, false);
         router.delete("/files/{filename}", Handlers::deleteFileHandler, false);
