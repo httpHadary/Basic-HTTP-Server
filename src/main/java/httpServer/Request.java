@@ -10,6 +10,7 @@ public class Request {
     private Map<String, String> requestHeaders;
     private Map<String, String> pathParameters;
     private byte[] requestBody;
+    private Route matchedRoute;
 
     Request() {
         requestHeaders = new HashMap<>();
@@ -121,6 +122,14 @@ public class Request {
 
     public void clearPathParameters() {
         pathParameters.clear();
+    }
+
+    public void setMatchedRoute(Route route) {
+        if (route != null) this.matchedRoute = route;
+    }
+
+    public Route getMatchedRoute() {
+        return this.matchedRoute;
     }
 
 }

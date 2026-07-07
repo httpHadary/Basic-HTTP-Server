@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class HTTPServer {
     static String ROOT_DIRECTORY = "";
-    private static Router router = new Router();
+    private static final Router router = new Router();
     private static final List<Middleware> middlewares = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -68,18 +68,48 @@ public class HTTPServer {
                 break;
             }
 
-            MiddlewareChain middlewareChain =
-                    new MiddlewareChain(
-                        middlewares,
-                        () -> {
-                                try {
-                                    handleRouting(requestObject, responseObject);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            } );
+            if(!isSupportedHttpVersion(requestObject)) {
+                responseObject.setStatusCode("505");
+                responseObject.setTextResponseBody("This HTTP Version Is Not Supported.");
+                responseObject.addResponseHeader("Content-Type", "text/plain");
+            } else {
+                Router.RouteResult result = router.findRoute(requestObject);
 
-            middlewareChain.next(requestObject, responseObject);
+                switch (result) {
+                    case Router.RouteResult.METHOD_NOT_ALLOWED -> {
+                        responseObject.setStatusCode("405");
+                        responseObject.setTextResponseBody("Method Not Allowed");
+                        responseObject.addResponseHeader("Content-Type", "text/plain");
+                        break;
+                    }
+
+                    case Router.RouteResult.NOT_FOUND -> {
+                        responseObject.setStatusCode("404");
+                        responseObject.setTextResponseBody("Route Is Not Found");
+                        responseObject.addResponseHeader("Content-Type", "text/plain");
+                        break;
+                    }
+
+                    case Router.RouteResult.MATCHED -> {
+                        MiddlewareChain middlewareChain =
+                                new MiddlewareChain(
+                                        middlewares,
+                                        () -> {
+                                            try {
+                                                requestObject
+                                                        .getMatchedRoute()
+                                                        .getHandler()
+                                                        .handle(requestObject, responseObject);
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        } );
+
+                        middlewareChain.next(requestObject, responseObject);
+                        break;
+                    }
+                }
+            }
 
             byte[] response = getResponse(responseObject, !requestObject.getVerb().equals("HEAD"));
             output.write(response);
@@ -93,6 +123,10 @@ public class HTTPServer {
         }
 
         connection.close();
+    }
+
+    private static boolean isSupportedHttpVersion(Request requestObject) {
+        return requestObject.getVersion().equals("HTTP/1.1") || requestObject.getVersion().equals("HTTP/1.0");
     }
 
     static void parseRequest(InputStream inputStream, Request request) throws IOException {
@@ -143,32 +177,6 @@ public class HTTPServer {
         }
 
         return lineBuffer.toString(StandardCharsets.UTF_8);
-    }
-
-    static void handleRouting(Request request, Response response) throws IOException {
-        String verb = request.getVerb();
-        String url = request.getURL();
-        String version = request.getVersion();
-
-        if(!version.equals("HTTP/1.1") && !version.equals("HTTP/1.0")) {
-            response.setStatusCode("505");
-            response.setTextResponseBody("This HTTP Version Is Not Supported.");
-            response.addResponseHeader("Content-Type", "text/plain");
-            return;
-        }
-        
-        Router.RouteResult result = router.handle(request, response);
-
-        if (result == Router.RouteResult.MATCHED)
-            return;
-        else if (result == Router.RouteResult.METHOD_NOT_ALLOWED) {
-            response.setStatusCode("405");
-            response.setTextResponseBody("Method Not Allowed");
-            return;
-        } else {
-            response.setStatusCode("404");
-            response.setTextResponseBody("httpServer.Route Is Not Found");
-        }
     }
 
     static void registerRoutes() {

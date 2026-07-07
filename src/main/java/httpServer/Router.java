@@ -31,6 +31,28 @@ public class Router {
         routes.add(new Route("HEAD", path, handler, requiresAuth));
     }
 
+    public RouteResult findRoute(Request request) throws IOException {
+        boolean doesPathExists = false;
+
+        for(Route route : routes) {
+            request.clearPathParameters();
+
+            if(matches(route, request)) {
+                doesPathExists = true;
+
+                if(route.getMethod().equals(request.getVerb())) {
+                    request.setMatchedRoute(route);
+
+                    return RouteResult.MATCHED; //everything is fine
+                }
+            }
+        }
+
+        if(doesPathExists) return RouteResult.METHOD_NOT_ALLOWED; //path matched put with wrong method
+
+        return RouteResult.NOT_FOUND; //both method and path not matched
+    }
+
     public boolean matches(Route route, Request request) {
         String[] patternParts = splitPath(route.getPattern());
         String[] urlParts = splitPath(request.getURL().split("\\?", 2)[0]); //removes query parameters before splitting
@@ -60,29 +82,6 @@ public class Router {
         if (path.isEmpty()) return new String[0];
 
         return path.split("/");
-    }
-
-    public RouteResult handle(Request request, Response response) throws IOException {
-        boolean doesPathExists = false;
-
-        for(Route route : routes) {
-            request.clearPathParameters();
-
-            if(matches(route, request)) {
-                doesPathExists = true;
-
-                if(route.getMethod().equals(request.getVerb())) {
-
-                    route.getHandler().handle(request, response);
-
-                    return RouteResult.MATCHED; //everything is fine
-                }
-            }
-        }
-
-        if(doesPathExists) return RouteResult.METHOD_NOT_ALLOWED; //path matched put with wrong method
-
-        return RouteResult.NOT_FOUND; //both method and path not matched
     }
 
 }
