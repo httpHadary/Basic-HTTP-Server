@@ -68,42 +68,9 @@ public class HTTPServer {
 
             if(!isSupportedHttpVersion(requestObject)) {
                 responseObject.setStatusCode("505");
-                responseObject.setTextResponseBody("This HTTP Version Is Not Supported.");
-                responseObject.addResponseHeader("Content-Type", "text/plain");
+                responseObject.text("This HTTP Version Is Not Supported.");
             } else {
-                Router.RouteResult result = router.findRoute(requestObject);
-
-                switch (result) {
-                    case Router.RouteResult.METHOD_NOT_ALLOWED -> {
-                        responseObject.setStatusCode("405");
-                        responseObject.setTextResponseBody("Method Not Allowed");
-                        responseObject.addResponseHeader("Content-Type", "text/plain");
-                    }
-
-                    case Router.RouteResult.NOT_FOUND -> {
-                        responseObject.setStatusCode("404");
-                        responseObject.setTextResponseBody("Route Is Not Found");
-                        responseObject.addResponseHeader("Content-Type", "text/plain");
-                    }
-
-                    case Router.RouteResult.MATCHED -> {
-                        MiddlewareChain middlewareChain =
-                                new MiddlewareChain(
-                                        middlewares,
-                                        () -> {
-                                            try {
-                                                requestObject
-                                                        .getMatchedRoute()
-                                                        .getHandler()
-                                                        .handle(requestObject, responseObject);
-                                            } catch (IOException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        } );
-
-                        middlewareChain.next(requestObject, responseObject);
-                    }
-                }
+                executeMiddleware(requestObject, responseObject);
             }
 
             byte[] response = getResponse(responseObject, !requestObject.getVerb().equals("HEAD"));
@@ -122,6 +89,42 @@ public class HTTPServer {
 
     private static boolean isSupportedHttpVersion(Request requestObject) {
         return requestObject.getVersion().equals("HTTP/1.1") || requestObject.getVersion().equals("HTTP/1.0");
+    }
+
+    private static void executeMiddleware(Request requestObject, Response responseObject) {
+
+        MiddlewareChain middlewareChain =
+                new MiddlewareChain(
+                        middlewares,
+                        () -> {
+                            try {
+                                Router.RouteResult result = router.findRoute(requestObject);
+
+                                switch (result) {
+                                    case Router.RouteResult.MATCHED -> {
+                                        requestObject
+                                                .getMatchedRoute()
+                                                .getHandler()
+                                                .handle(requestObject, responseObject);
+                                    }
+
+                                    case Router.RouteResult.METHOD_NOT_ALLOWED -> {
+                                        responseObject.setStatusCode("405");
+                                        responseObject.text("Method Not Allowed");
+                                    }
+
+                                    case Router.RouteResult.NOT_FOUND -> {
+                                        responseObject.setStatusCode("404");
+                                        responseObject.text("Route Is Not Found");
+                                    }
+                                }
+
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } );
+
+        middlewareChain.next(requestObject, responseObject);
     }
 
     static void parseRequest(InputStream inputStream, Request request) throws IOException {
