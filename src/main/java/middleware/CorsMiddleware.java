@@ -1,7 +1,7 @@
 package middleware;
 
-import httpServer.Request;
-import httpServer.Response;
+import webServer.Request;
+import webServer.Response;
 
 public class CorsMiddleware implements Middleware{
     @Override

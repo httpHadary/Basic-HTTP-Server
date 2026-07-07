@@ -1,4 +1,4 @@
-package httpServer;
+package webServer;
 
 public class Route {
     private final String method;

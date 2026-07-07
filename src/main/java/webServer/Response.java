@@ -1,11 +1,10 @@
-package httpServer;
+package webServer;
 
 import serialization.JsonSerializer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class Response {
     private final String httpVersion = "HTTP/1.1";

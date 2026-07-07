@@ -1,4 +1,4 @@
-package httpServer;
+package webServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,12 +25,12 @@ public class Handlers {
 
     public static void downloadFileHandler(Request request, Response response) throws IOException {
         String fileName = request.getPathParameter("filename");
-        File file = new File(HTTPServer.ROOT_DIRECTORY, fileName);
+        File file = new File(WebServer.ROOT_DIRECTORY, fileName);
 
         if (file.exists()) {
             byte[] body = Files.readAllBytes(file.toPath());
             response.setStatusCode("200");
-            response.addResponseHeader("Content-Type", HTTPServer.getMimeType(fileName));
+            response.addResponseHeader("Content-Type", WebServer.getMimeType(fileName));
             response.setResponseBody(body);
         } else {
             response.setStatusCode("404");
@@ -40,7 +40,7 @@ public class Handlers {
 
     public static void createFileHandler(Request request, Response response) throws IOException {
         String fileName = request.getPathParameter("filename");
-        File file = new File(HTTPServer.ROOT_DIRECTORY, fileName);
+        File file = new File(WebServer.ROOT_DIRECTORY, fileName);
 
         Files.write(file.toPath(), request.getRequestBody());
         response.setStatusCode("201");
@@ -49,7 +49,7 @@ public class Handlers {
 
     public static void updateFileHandler(Request request, Response response) throws IOException {
         String fileName = request.getPathParameter("filename");
-        File file = new File(HTTPServer.ROOT_DIRECTORY, fileName);
+        File file = new File(WebServer.ROOT_DIRECTORY, fileName);
 
         Files.write(file.toPath(), request.getRequestBody());
 
@@ -58,7 +58,7 @@ public class Handlers {
 
     public static void deleteFileHandler(Request request, Response response) throws IOException {
         String fileName = request.getPathParameter("filename");
-        File file = new File(HTTPServer.ROOT_DIRECTORY, fileName);
+        File file = new File(WebServer.ROOT_DIRECTORY, fileName);
 
         boolean isDeleted = Files.deleteIfExists(file.toPath());
 

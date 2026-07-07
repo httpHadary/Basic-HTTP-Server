@@ -1,9 +1,8 @@
 package middleware;
 
-import httpServer.Request;
-import httpServer.Response;
+import webServer.Request;
+import webServer.Response;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MiddlewareChain {

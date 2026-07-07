@@ -1,4 +1,4 @@
-package httpServer;
+package webServer;
 
 import middleware.*;
 
@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class HTTPServer {
+public class WebServer {
     static String ROOT_DIRECTORY = "";
+    static String STATIC_DIRECTORY = "public";
     private static final Router router = new Router();
     private static final List<Middleware> middlewares = new ArrayList<>();
 
@@ -89,8 +90,12 @@ public class HTTPServer {
             return;
         }
 
-        if (resolveRoute(requestObject, responseObject)){
+        Router.RouteResult result = resolveRoute(requestObject, responseObject);
+
+        if (result.equals(Router.RouteResult.MATCHED)){
             executeMiddleware(requestObject, responseObject);
+        } else if (result.equals(Router.RouteResult.NOT_FOUND)){
+            StaticFileServer.serve(requestObject, responseObject, STATIC_DIRECTORY);
         }
     }
 
@@ -121,30 +126,28 @@ public class HTTPServer {
         middlewareChain.next(requestObject, responseObject);
     }
 
-    private static boolean resolveRoute(Request requestObject, Response responseObject) {
-        if ("OPTIONS".equals(requestObject.getVerb())) return true;
+    private static Router.RouteResult resolveRoute(Request requestObject, Response responseObject) {
+        if ("OPTIONS".equals(requestObject.getVerb())) return Router.RouteResult.MATCHED;
 
         Router.RouteResult result = router.findRoute(requestObject);
 
         switch (result) {
             case Router.RouteResult.MATCHED -> {
-                return true;
+                return Router.RouteResult.MATCHED;
             }
 
             case Router.RouteResult.METHOD_NOT_ALLOWED -> {
                 responseObject.setStatusCode("405");
                 responseObject.text("Method Not Allowed");
-                return false;
+                return Router.RouteResult.METHOD_NOT_ALLOWED;
             }
 
             case Router.RouteResult.NOT_FOUND -> {
-                responseObject.setStatusCode("404");
-                responseObject.text("Route Is Not Found");
-                return false;
+                return Router.RouteResult.NOT_FOUND;
             }
         }
 
-        return false;
+        return Router.RouteResult.NOT_FOUND;
     }
 
     static void parseRequest(InputStream inputStream, Request request) throws IOException {
@@ -198,7 +201,7 @@ public class HTTPServer {
     }
 
     static void registerRoutes() {
-        router.get("/", Handlers::homeHandler, false);
+//        router.get("/", Handlers::homeHandler, false);
         router.get("/hello", Handlers::helloHandler, false);
         router.get("/user-agent", Handlers::userAgentHandler, false);
         router.get("/echo/{message}", Handlers::echoHandler, false);

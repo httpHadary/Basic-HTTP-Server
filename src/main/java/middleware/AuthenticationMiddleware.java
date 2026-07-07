@@ -1,10 +1,8 @@
 package middleware;
 
-import httpServer.Request;
-import httpServer.Response;
-import httpServer.Route;
-
-import java.util.Map;
+import webServer.Request;
+import webServer.Response;
+import webServer.Route;
 
 public class AuthenticationMiddleware implements Middleware{
     private static final String VALID_TOKEN = "Bearer secret-token";

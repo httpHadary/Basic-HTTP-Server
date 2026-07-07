@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.codecrafters</groupId>
-    <artifactId>Basic HTTP Server</artifactId>
+    <artifactId>Micro Backend Framework</artifactId>
     <version>1.0</version>
 
     <properties>
