@@ -23,7 +23,7 @@ public class WebServer {
         if(ROOT_DIRECTORY.isEmpty()) ROOT_DIRECTORY = "files";
 
         try (
-            ServerSocket serverSocket = new ServerSocket(4221)
+            ServerSocket serverSocket = new ServerSocket(5555)
         )
         {
             registerRoutes();
